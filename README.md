@@ -1,1 +1,192 @@
 # ComeBuy
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ComeBuy - Your Online Store</title>
+<style>
+  body { font-family: Arial, sans-serif; margin:0; background: #fff; color: #111; }
+  header { background: #232f3e; color: #fff; padding: 1em; text-align: center; }
+  .products { display: flex; flex-wrap: wrap; justify-content: center; padding: 1em; gap: 1em; }
+  .product { border: 1px solid #ddd; border-radius: 5px; width: 220px; padding: 1em; }
+  .product img { width: 100%; height: 150px; object-fit: contain; }
+  button { background: #febd69; border: none; padding: 0.5em 1em; cursor: pointer; font-weight: bold; border-radius: 3px; }
+  button:hover { background: #f3a847; }
+  nav { padding: 0.5em; background: #37475a; text-align: center; }
+  nav a { color: #fff; margin: 0 1em; text-decoration: none; font-weight: bold; }
+  nav a:hover { text-decoration: underline; }
+  #cartCount { font-weight: bold; color: #febd69; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>ComeBuy</h1>
+  <p>Your one-stop online store for everything!</p>
+</header>
+
+<nav>
+  <a href="#" onclick="showProducts()">Home</a> | 
+  <a href="#" onclick="showCart()">Cart (<span id="cartCount">0</span>)</a>
+</nav>
+
+<main id="mainContent">
+
+  <section class="products" id="productsList"></section>
+
+  <section id="cartSection" style="display:none; padding: 1em;">
+    <h2>Your Cart</h2>
+    <div id="cartItems"></div>
+    <h3>Total: ₹<span id="cartTotal">0</span></h3>
+    <button onclick="checkout()">Proceed to Checkout</button>
+    <button onclick="showProducts()">Continue Shopping</button>
+  </section>
+
+  <section id="checkoutSection" style="display:none; padding: 1em;">
+    <h2>Checkout</h2>
+    <p>Select your payment method:</p>
+
+    <button onclick="payWithPayPal()">Pay with PayPal</button>
+    <div style="margin: 1em 0;">
+      <h3>Or Pay Using UPI</h3>
+      <p>UPI ID: <strong>comebuy@upi</strong></p>
+      <img src="https://upload.wikimedia.org/wikipedia/commons/3/33/UPI_QR_Code.png" alt="UPI QR Code" width="150" />
+      <p>Scan the QR code or use the UPI ID to pay.</p>
+    </div>
+
+    <button onclick="completeOrder()">Complete Order</button>
+  </section>
+
+  <section id="thankYouSection" style="display:none; padding: 1em; text-align: center;">
+    <h2>Thank you for shopping at ComeBuy!</h2>
+    <p>Your order has been received.</p>
+    <button onclick="showProducts()">Back to Home</button>
+  </section>
+
+</main>
+
+<script>
+  const products = [
+    {id:1, name:"Wireless Headphones", price:1999, img:"https://m.media-amazon.com/images/I/71p7vQkBxzL._SL1500_.jpg"},
+    {id:2, name:"Men's Casual Shirt", price:799, img:"https://m.media-amazon.com/images/I/61B4XMIq9UL._UL1500_.jpg"},
+    {id:3, name:"Smartwatch", price:3499, img:"https://m.media-amazon.com/images/I/61suE68zDGL._UL1500_.jpg"},
+    {id:4, name:"Classic Novel Book", price:299, img:"https://images-na.ssl-images-amazon.com/images/I/51fR8j27bbL._SX331_BO1,204,203,200_.jpg"},
+    {id:5, name:"Women’s Running Shoes", price:2499, img:"https://m.media-amazon.com/images/I/71T1ZH9i7qL._UL1500_.jpg"},
+  ];
+
+  let cart = [];
+
+  function showProducts() {
+    document.getElementById("productsList").style.display = "flex";
+    document.getElementById("cartSection").style.display = "none";
+    document.getElementById("checkoutSection").style.display = "none";
+    document.getElementById("thankYouSection").style.display = "none";
+
+    const container = document.getElementById("productsList");
+    container.innerHTML = "";
+
+    products.forEach(p => {
+      const div = document.createElement("div");
+      div.className = "product";
+      div.innerHTML = `
+        <img src="${p.img}" alt="${p.name}" />
+        <h3>${p.name}</h3>
+        <p>₹${p.price}</p>
+        <button onclick="addToCart(${p.id})">Add to Cart</button>
+      `;
+      container.appendChild(div);
+    });
+    updateCartCount();
+  }
+
+  function addToCart(id) {
+    const product = products.find(p => p.id === id);
+    const existing = cart.find(item => item.id === id);
+    if (existing) {
+      existing.qty++;
+    } else {
+      cart.push({ ...product, qty: 1 });
+    }
+    updateCartCount();
+    alert(`${product.name} added to cart.`);
+  }
+
+  function updateCartCount() {
+    document.getElementById("cartCount").textContent = cart.reduce((a,b) => a + b.qty, 0);
+  }
+
+  function showCart() {
+    document.getElementById("productsList").style.display = "none";
+    document.getElementById("cartSection").style.display = "block";
+    document.getElementById("checkoutSection").style.display = "none";
+    document.getElementById("thankYouSection").style.display = "none";
+
+    const container = document.getElementById("cartItems");
+    container.innerHTML = "";
+
+    if (cart.length === 0) {
+      container.innerHTML = "<p>Your cart is empty.</p>";
+      document.getElementById("cartTotal").textContent = "0";
+      return;
+    }
+
+    let total = 0;
+    cart.forEach(item => {
+      total += item.price * item.qty;
+      const div = document.createElement("div");
+      div.style.marginBottom = "1em";
+      div.innerHTML = `
+        <strong>${item.name}</strong> x ${item.qty} = ₹${item.price * item.qty}
+        <button onclick="removeFromCart(${item.id})" style="margin-left: 1em;">Remove</button>
+      `;
+      container.appendChild(div);
+    });
+
+    document.getElementById("cartTotal").textContent = total;
+  }
+
+  function removeFromCart(id) {
+    cart = cart.filter(item => item.id !== id);
+    showCart();
+    updateCartCount();
+  }
+
+  function checkout() {
+    if (cart.length === 0) {
+      alert("Your cart is empty.");
+      return;
+    }
+    document.getElementById("productsList").style.display = "none";
+    document.getElementById("cartSection").style.display = "none";
+    document.getElementById("checkoutSection").style.display = "block";
+    document.getElementById("thankYouSection").style.display = "none";
+  }
+
+  function payWithPayPal() {
+    // Example sandbox PayPal link with amount - Replace with your real PayPal link
+    let total = cart.reduce((a,b) => a + b.price * b.qty, 0);
+    const url = `https://www.sandbox.paypal.com/cgi-bin/webscr?cmd=_xclick&business=your-paypal-email@example.com&item_name=ComeBuy+Order&amount=${total}&currency_code=INR`;
+    window.open(url, "_blank");
+  }
+
+  function completeOrder() {
+    alert("Thank you for your order! Please complete payment using the chosen method.");
+    cart = [];
+    showThankYou();
+  }
+
+  function showThankYou() {
+    document.getElementById("productsList").style.display = "none";
+    document.getElementById("cartSection").style.display = "none";
+    document.getElementById("checkoutSection").style.display = "none";
+    document.getElementById("thankYouSection").style.display = "block";
+    updateCartCount();
+  }
+
+  // Initial load
+  showProducts();
+</script>
+
+</body>
+</html>
